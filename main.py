@@ -140,6 +140,25 @@ def redo_move(grid, redo_stack, history):
         print("No moves to redo.")
     return grid
 
+def hint(grid):
+    empty_location = find_empty_location(grid)
+    if empty_location:
+        row, col = empty_location
+        for num in range(1, 10):
+            if is_valid(grid, row, col, num):
+                grid[row][col] = num
+                print(f"Hint: Filled cell ({row+1}, {col+1}) with {num}")
+                print_grid(grid)
+                return grid
+    print("No hints available or puzzle already complete.")
+    return grid
+
+def reset_puzzle(grid, original_grid):
+    grid = deepcopy(original_grid)
+    print("Puzzle reset to the original state:")
+    print_grid(grid)
+    return grid
+
 def confirm_save_puzzle(grid):
     confirm = input("Do you want to save the current puzzle? (y/n): ").lower()
     if confirm == 'y':
@@ -178,9 +197,13 @@ def main_menu():
             break
 
 def main():
+    grid = None  # Initialize grid to None
     redo_stack = []
+    history = []
+    original_grid = None
+    
     print("Sudoku Solver and Generator")
-    choice = input("Choose (1) Solve a Sudoku, (2) Generate a Sudoku puzzle, (3) Load a Sudoku puzzle, (4) Save the current puzzle, (5) Input your own puzzle, (6) Undo last move, (7) Redo last move: ")
+    choice = input("Choose (1) Solve a Sudoku, (2) Generate a Sudoku puzzle, (3) Load a Sudoku puzzle, (4) Save the current puzzle, (5) Input your own puzzle, (6) Undo last move, (7) Redo last move, (8) Get a Hint, (9) Reset Puzzle: ")
 
     if choice == '1':
         grid = [
@@ -194,6 +217,8 @@ def main():
             [0, 0, 0, 4, 1, 9, 0, 0, 5],
             [0, 0, 0, 0, 8, 0, 0, 7, 9]
         ]
+        original_grid = deepcopy(grid)  # Save the original grid for reset functionality
+        history.append(deepcopy(grid))  # Save initial state to history
         if solve_sudoku(grid):
             print("Sudoku solved successfully:")
             print_grid(grid)
@@ -204,6 +229,8 @@ def main():
     elif choice == '2':
         num_remove = select_difficulty()
         grid = generate_sudoku()
+        original_grid = deepcopy(grid)  # Save the original grid for reset functionality
+        history.append(deepcopy(grid))  # Save initial state to history
         remove_numbers(grid, num_remove)
         print("Generated Sudoku puzzle:")
         print_grid(grid)
@@ -218,6 +245,8 @@ def main():
     elif choice == '3':
         grid = confirm_load_puzzle()
         if grid and validate_puzzle(grid):
+            original_grid = deepcopy(grid)  # Save the loaded grid for reset functionality
+            history.append(deepcopy(grid))  # Save initial state to history
             print("Loaded Sudoku puzzle:")
             print_grid(grid)
             if solve_sudoku(grid):
@@ -229,10 +258,14 @@ def main():
             print("Invalid puzzle or file error.")
     
     elif choice == '4':
-        confirm_save_puzzle(grid)
+        if grid is not None:
+            confirm_save_puzzle(grid)
+        else:
+            print("No puzzle to save.")
     
     elif choice == '5':
         grid, history = input_puzzle()
+        original_grid = deepcopy(grid)  # Save the input grid for reset functionality
         print("Your Sudoku puzzle:")
         print_grid(grid)
         if solve_sudoku(grid):
@@ -243,13 +276,32 @@ def main():
             print("No solution exists")
     
     elif choice == '6':
-        grid = undo_move(grid, history)
+        if grid is not None:
+            grid = undo_move(grid, history)
+        else:
+            print("No puzzle to undo.")
     
     elif choice == '7':
-        grid = redo_move(grid, redo_stack, history)
+        if grid is not None:
+            grid = redo_move(grid, redo_stack, history)
+        else:
+            print("No puzzle to redo.")
+    
+    elif choice == '8':
+        if grid is not None:
+            grid = hint(grid)
+        else:
+            print("No puzzle available for hint.")
+    
+    elif choice == '9':
+        if grid is not None and original_grid is not None:
+            grid = reset_puzzle(grid, original_grid)
+            history = [deepcopy(grid)]  # Reset history to the original grid
+        else:
+            print("No puzzle to reset.")
     
     else:
         print("Invalid choice")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main_menu()
