@@ -11,7 +11,7 @@ def is_valid(grid, row, col, num):
     if num in (grid[r][col] for r in range(9)):
         return False
     start_row, start_col = 3 * (row // 3), 3 * (col // 3)
-    for r in range(start_row, start_col + 3):
+    for r in range(start_row, start_row + 3):
         for c in range(start_col, start_col + 3):
             if grid[r][c] == num:
                 return False
@@ -40,7 +40,6 @@ def solve_sudoku(grid):
 def generate_sudoku():
     grid = [[0] * 9 for _ in range(9)]
     fill_grid(grid)
-    remove_numbers(grid)
     return grid
 
 def fill_grid(grid):
@@ -74,20 +73,27 @@ def is_complete(grid):
     return True
 
 def save_puzzle(grid, filename):
-    with open(filename, 'w') as f:
-        json.dump(grid, f)
-    print(f"Puzzle saved to {filename}")
+    try:
+        with open(filename, 'w') as f:
+            json.dump(grid, f)
+        print(f"Puzzle saved successfully to {filename}")
+    except Exception as e:
+        print(f"Failed to save the puzzle. Error: {e}")
 
 def load_puzzle(filename):
     try:
         with open(filename, 'r') as f:
             grid = json.load(f)
+        print(f"Puzzle loaded successfully from {filename}")
         return grid
     except FileNotFoundError:
-        print("File not found.")
+        print("File not found. Please check the filename and try again.")
         return None
     except json.JSONDecodeError:
-        print("Error decoding JSON.")
+        print("Error decoding JSON. Please ensure the file format is correct.")
+        return None
+    except Exception as e:
+        print(f"Failed to load the puzzle. Error: {e}")
         return None
 
 def validate_puzzle(grid):
@@ -110,6 +116,35 @@ def input_puzzle():
             else:
                 print("Invalid input, please enter exactly 9 digits.")
     return grid
+
+def confirm_save_puzzle(grid):
+    confirm = input("Do you want to save the current puzzle? (y/n): ").lower()
+    if confirm == 'y':
+        filename = input("Enter the filename to save the puzzle: ")
+        save_puzzle(grid, filename)
+    else:
+        print("Puzzle not saved.")
+
+def confirm_load_puzzle():
+    confirm = input("Do you want to load a saved puzzle? (y/n): ").lower()
+    if confirm == 'y':
+        filename = input("Enter the filename to load the puzzle from: ")
+        return load_puzzle(filename)
+    else:
+        print("No puzzle loaded.")
+        return None
+
+def select_difficulty():
+    difficulty = input("Select difficulty (1) Easy (2) Medium (3) Hard: ")
+    if difficulty == '1':
+        return 30
+    elif difficulty == '2':
+        return 40
+    elif difficulty == '3':
+        return 50
+    else:
+        print("Invalid choice. Defaulting to Medium difficulty.")
+        return 40
 
 def main_menu():
     while True:
@@ -138,21 +173,26 @@ def main():
         if solve_sudoku(grid):
             print("Sudoku solved successfully:")
             print_grid(grid)
+            confirm_save_puzzle(grid)
         else:
             print("No solution exists")
+    
     elif choice == '2':
+        num_remove = select_difficulty()
         grid = generate_sudoku()
+        remove_numbers(grid, num_remove)
         print("Generated Sudoku puzzle:")
         print_grid(grid)
         input("Press Enter to solve the generated puzzle...")
         if solve_sudoku(grid):
             print("Solved Sudoku puzzle:")
             print_grid(grid)
+            confirm_save_puzzle(grid)
         else:
             print("No solution exists")
+    
     elif choice == '3':
-        filename = input("Enter the filename to load: ")
-        grid = load_puzzle(filename)
+        grid = confirm_load_puzzle()
         if grid and validate_puzzle(grid):
             print("Loaded Sudoku puzzle:")
             print_grid(grid)
@@ -163,20 +203,10 @@ def main():
                 print("No solution exists")
         else:
             print("Invalid puzzle or file error.")
+    
     elif choice == '4':
-        filename = input("Enter the filename to save the puzzle: ")
-        grid = [
-            [5, 3, 0, 0, 7, 0, 0, 0, 0],
-            [6, 0, 0, 1, 9, 5, 0, 0, 0],
-            [0, 9, 8, 0, 0, 0, 0, 6, 0],
-            [8, 0, 0, 0, 6, 0, 0, 0, 3],
-            [4, 0, 0, 8, 0, 3, 0, 0, 1],
-            [7, 0, 0, 0, 2, 0, 0, 0, 6],
-            [0, 6, 0, 0, 0, 0, 2, 8, 0],
-            [0, 0, 0, 4, 1, 9, 0, 0, 5],
-            [0, 0, 0, 0, 8, 0, 0, 7, 9]
-        ]
-        save_puzzle(grid, filename)
+        confirm_save_puzzle(grid)
+    
     elif choice == '5':
         grid = input_puzzle()
         print("Your Sudoku puzzle:")
@@ -184,6 +214,7 @@ def main():
         if solve_sudoku(grid):
             print("Solved Sudoku puzzle:")
             print_grid(grid)
+            confirm_save_puzzle(grid)
         else:
             print("No solution exists")
     else:
