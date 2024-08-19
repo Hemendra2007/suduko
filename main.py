@@ -11,7 +11,7 @@ def is_valid(grid, row, col, num):
     if num in (grid[r][col] for r in range(9)):
         return False
     start_row, start_col = 3 * (row // 3), 3 * (col // 3)
-    for r in range(start_row, start_row + 3):
+    for r in range(start_row, start_col + 3):
         for c in range(start_col, start_col + 3):
             if grid[r][c] == num:
                 return False
@@ -98,9 +98,30 @@ def validate_puzzle(grid):
                 return False
     return True
 
+def input_puzzle():
+    grid = []
+    print("Enter your Sudoku puzzle row by row (use 0 for empty cells):")
+    for _ in range(9):
+        while True:
+            row = input("Enter a row (9 digits): ")
+            if len(row) == 9 and all(c.isdigit() for c in row):
+                grid.append([int(c) for c in row])
+                break
+            else:
+                print("Invalid input, please enter exactly 9 digits.")
+    return grid
+
+def main_menu():
+    while True:
+        main()
+        again = input("Do you want to play again? (y/n): ").lower()
+        if again != 'y':
+            print("Goodbye!")
+            break
+
 def main():
     print("Sudoku Solver and Generator")
-    choice = input("Choose (1) Solve a Sudoku, (2) Generate a Sudoku puzzle, (3) Load a Sudoku puzzle, (4) Save the current puzzle: ")
+    choice = input("Choose (1) Solve a Sudoku, (2) Generate a Sudoku puzzle, (3) Load a Sudoku puzzle, (4) Save the current puzzle, (5) Input your own puzzle: ")
     
     if choice == '1':
         grid = [
@@ -156,8 +177,17 @@ def main():
             [0, 0, 0, 0, 8, 0, 0, 7, 9]
         ]
         save_puzzle(grid, filename)
+    elif choice == '5':
+        grid = input_puzzle()
+        print("Your Sudoku puzzle:")
+        print_grid(grid)
+        if solve_sudoku(grid):
+            print("Solved Sudoku puzzle:")
+            print_grid(grid)
+        else:
+            print("No solution exists")
     else:
         print("Invalid choice")
 
 if __name__ == "__main__":
-    main()
+    main_menu()
