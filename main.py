@@ -1,5 +1,6 @@
 import random
 import json
+from copy import deepcopy
 
 def print_grid(grid):
     print("\n".join(" ".join(str(num) if num != 0 else '.' for num in row) for row in grid))
@@ -106,15 +107,37 @@ def validate_puzzle(grid):
 
 def input_puzzle():
     grid = []
+    history = []
     print("Enter your Sudoku puzzle row by row (use 0 for empty cells):")
     for _ in range(9):
         while True:
             row = input("Enter a row (9 digits): ")
             if len(row) == 9 and all(c.isdigit() for c in row):
                 grid.append([int(c) for c in row])
+                history.append(deepcopy(grid))  # Save history for undo
                 break
             else:
                 print("Invalid input, please enter exactly 9 digits.")
+    return grid, history
+
+def undo_move(grid, history):
+    if len(history) > 1:
+        history.pop()  # Remove the last move
+        grid = deepcopy(history[-1])  # Revert to the previous state
+        print("Undo successful. Current puzzle state:")
+        print_grid(grid)
+    else:
+        print("No more moves to undo.")
+    return grid
+
+def redo_move(grid, redo_stack, history):
+    if redo_stack:
+        grid = deepcopy(redo_stack.pop())  # Apply the next move
+        history.append(deepcopy(grid))  # Save it in history
+        print("Redo successful. Current puzzle state:")
+        print_grid(grid)
+    else:
+        print("No moves to redo.")
     return grid
 
 def confirm_save_puzzle(grid):
@@ -155,9 +178,10 @@ def main_menu():
             break
 
 def main():
+    redo_stack = []
     print("Sudoku Solver and Generator")
-    choice = input("Choose (1) Solve a Sudoku, (2) Generate a Sudoku puzzle, (3) Load a Sudoku puzzle, (4) Save the current puzzle, (5) Input your own puzzle: ")
-    
+    choice = input("Choose (1) Solve a Sudoku, (2) Generate a Sudoku puzzle, (3) Load a Sudoku puzzle, (4) Save the current puzzle, (5) Input your own puzzle, (6) Undo last move, (7) Redo last move: ")
+
     if choice == '1':
         grid = [
             [5, 3, 0, 0, 7, 0, 0, 0, 0],
@@ -208,7 +232,7 @@ def main():
         confirm_save_puzzle(grid)
     
     elif choice == '5':
-        grid = input_puzzle()
+        grid, history = input_puzzle()
         print("Your Sudoku puzzle:")
         print_grid(grid)
         if solve_sudoku(grid):
@@ -217,6 +241,13 @@ def main():
             confirm_save_puzzle(grid)
         else:
             print("No solution exists")
+    
+    elif choice == '6':
+        grid = undo_move(grid, history)
+    
+    elif choice == '7':
+        grid = redo_move(grid, redo_stack, history)
+    
     else:
         print("Invalid choice")
 
